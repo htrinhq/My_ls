@@ -15,13 +15,16 @@
 #include <dirent.h>
 #include "ls.h"
 
-int numberfile(char **av)
+int numberfile(int ac, char **av)
 {
 	DIR *dir;
 	int x = 0;
 	struct dirent *number = malloc(sizeof(struct dirent));
-	dir = opendir(av[1]);
 
+	if (ac == 1)
+		dir = opendir("./");
+	else
+		dir = opendir(av[1]);
 	while (number) {
 		number = readdir(dir);
 		x = x + 1;
@@ -30,23 +33,35 @@ int numberfile(char **av)
 	return (x);
 }
 
-void display()
+void simpledisplay(struct dirent **result, DIR *dir)
 {
+	int i = 0;
 
+	while (result[i]) {
+		if (result[i]->d_name[0] != '.')
+			my_printf("%s\n", result[i]->d_name);
+		i = i + 1;
+		result[i] = readdir(dir);
+	}
 }
 
 int main(int ac, char **av)
 {
 	DIR *dir;
 	int y = 0;
-	int nbfile = numberfile(av);
+	int nbfile = numberfile(ac, av);
 	struct dirent **result = malloc(sizeof(struct dirent) * nbfile);
 
 	if (ac == 1) {
 		dir = opendir("./");
 		result[y] = readdir(dir);
-		display();
-		closedir("./");
+		simpledisplay(result, dir);
+		closedir(dir);
+	} else {
+		dir = opendir(av[1]);
+		result[y] = readdir(dir);
+		simpledisplay(result, dir);
+		closedir(dir);
 	}
 	return (0);
 }
