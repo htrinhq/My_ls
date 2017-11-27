@@ -11,9 +11,9 @@ OBJ	=	$(SRC:.c=.o)
 
 NAME	=	my_ls
 
-CFLAGS	=	-W -Wall -Wextra -I include -g
+CFLAGS	=	-W -Wall -Wextra -I include
 
-LDFLAGS	=	-L ./lib/my -lmy -g
+LDFLAGS	=	-L ./lib/my -lmy
 
 all:	libmake $(NAME)
 
