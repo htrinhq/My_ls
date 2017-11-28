@@ -8,6 +8,16 @@
 #ifndef _LS_H
 #define _LS_H
 
+struct max {
+        int link;
+        int size;
+        int usr;
+        int grp;
+};
+
+typedef struct max max_t;
 int my_printf(const char *format, ...);
+int my_strlen(char const *str);
+void my_putchar(char c);
 
 #endif
