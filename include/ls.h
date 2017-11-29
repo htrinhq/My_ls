@@ -9,8 +9,8 @@
 #define _LS_H
 
 struct max {
-        int link;
-        int size;
+        unsigned int link;
+        long size;
         int usr;
         int grp;
 };

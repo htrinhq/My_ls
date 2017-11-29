@@ -57,7 +57,7 @@ int numberfile(int ac, char **av)
 		x = x + 1;
 	}
 	closedir(dir);
-	free(number);
+	//free(number);
 	return (x);
 }
 
@@ -127,49 +127,142 @@ void timeputstr(char *str)
 	}
 }
 
+void spacegrp(struct stat *st, int i, max_t *max)
+{
+	int d = 0;
+	int y = my_strlen(getgrgid(st[i].st_gid)->gr_name);
+
+	//y = st[i].st_nlink;
+	/*while (y >= 1) {
+		y = y / 10;
+		d = d + 1;
+	}*/
+	if (y < max->grp)
+		while (d < (max->grp - y)) {
+			my_printf(" ");
+			d = d + 1;
+	}
+}
+
+void spacelink(struct stat *st, int i, max_t *max)
+{
+	unsigned int y;
+	unsigned int d = 0;
+
+	y = st[i].st_nlink;
+	while (y >= 1) {
+		y = y / 10;
+		d = d + 1;
+	}
+	if (d < max->link)
+		while (d < max->link) {
+			my_printf(" ");
+			d = d + 1;
+	}
+}
+
+void spacesize(struct stat *st, int i, max_t *max)
+{
+	long y;
+	long d = 0;
+
+	y = st[i].st_size;
+	while (y >= 1) {
+		y = y / 10;
+		d = d + 1;
+	}
+	if (d < max->size)
+		while (d < max->size) {
+			my_printf(" ");
+			d = d + 1;
+	}
+}
+
 void properties(struct stat *st, int i, struct dirent **result, max_t *max)
 {
-	//int x = 0/*my_strlen(st[i].st_size)*/;
+
 	isdir(st, i);
 	permiusr(st, i);
 	permigroup(st, i);
 	permiother(st, i);
 	my_printf(".");
+	spacelink(st, i, max);
 	my_printf(" %d", st[i].st_nlink);
 	my_printf(" %s", getpwuid(st[i].st_uid)->pw_name);
 	my_printf(" %s", getgrgid(st[i].st_gid)->gr_name);
-/*if (my_strlen((*st[i]).st_size) < max->size) {
-		while (x < (max->size - my_strlen((*st[i]).st_size))) {
-			my_printf(" ");
-			x = x + 1;
-		}
-	}*/
+	spacegrp(st, i, max);
+	spacesize(st, i, max);
 	my_printf(" %lu ", st[i].st_size);
 	timeputstr(ctime(&st[i].st_mtime));
 	my_printf(" %s\n", result[i]->d_name);
 }
 
-int sizmax(struct dirent **result, char *path, struct stat *st)
+unsigned int linkmax(struct dirent **result, char *path, struct stat *st, DIR *dir)
 {
-	char *f_max = malloc(sizeof(char) * my_strlen(path));
+	char *f_max = malloc(sizeof(char) * (my_strlen(path) * 2));
 	int i = 0;
-	int x = 0;
-	int size = 1;
+	unsigned int x = 0;
+	int link = 1;
 
 	while (result[i]) {
-		/*if (result[i]->d_name[0] != '.') {
+		if (result[i]->d_name[0] != '.') {
+			//f_max = malloc(sizeof(char) * (my_strlen(path) + my_strlen(result[i]->d_name)));
 			f_max = my_strconcat(f_max, path, result[i]->d_name);
-			//my_printf("%s", f_max);
+			stat(f_max, &st[i]);
+			if (st[i].st_nlink > x)
+				x = st[i].st_nlink;
+		}
+		i = i + 1;
+		result[i] = readdir(dir);
+	}
+	while (x > 0) {
+		x = x / 10;
+		link = link + 1;
+	}
+	//free(f_max);
+	return (link);
+}
+
+int grpmax(struct dirent **result, char *path, struct stat *st, DIR *dir)
+{
+	char *f_max = malloc(sizeof(char) * (my_strlen(path) * 2));
+	int i = 0;
+	int x = 0;
+
+	while (result[i]) {
+		f_max = my_strconcat(f_max, path, result[i]->d_name);
+		stat(f_max, &st[i]);
+		if (my_strlen(getgrgid(st[i].st_gid)->gr_name) > x)
+			x = my_strlen(getgrgid(st[i].st_gid)->gr_name);
+		i = i + 1;
+		result[i] = readdir(dir);
+	}
+	free(f_max);
+	return (x);
+}
+
+long sizmax(struct dirent **result, char *path, struct stat *st, DIR *dir)
+{
+	char *f_max = malloc(sizeof(char) * (my_strlen(path) * 2));
+	int i = 0;
+	long x = 0;
+	long size = 0;
+
+	while (result[i]) {
+		if (result[i]->d_name[0] != '.') {
+			f_max = my_strconcat(f_max, path, result[i]->d_name);
 			stat(f_max, &st[i]);
 			if (st[i].st_size > x)
 				x = st[i].st_size;
-		}*/
+		}
 		i = i + 1;
+		result[i] = readdir(dir);
 	}
-	while (x >= 1) {
+	while (x > 0) {
 		x = x / 10;
 		size = size + 1;
 	}
+	free(f_max);
 	return (size);
 }
 
@@ -179,8 +272,11 @@ void ldisplaymult(struct dirent **result, DIR *dir, char *path, struct stat *st)
 	max_t *max = malloc(sizeof(max_t));
 	char *fname = malloc(sizeof(char) * my_strlen(path));
 
-	max->size = sizmax(result, path, st);
-	my_printf("max size : %d\n", max->size);
+	max->size = sizmax(result, path, st, dir);
+	max->link = linkmax(result, path, st, dir);
+	max->grp = grpmax(result, path, st, dir);
+	//my_printf("grp : %d\n", max->grp);
+	dir = opendir(path);
 	while (result[i]) {
 		if (result[i]->d_name[0] != '.') {
 			fname = my_strconcat(fname, path, result[i]->d_name);
@@ -191,6 +287,7 @@ void ldisplaymult(struct dirent **result, DIR *dir, char *path, struct stat *st)
 		result[i] = readdir(dir);
 	}
 	free(fname);
+	free(max);
 }
 
 void ldisplay(struct dirent **result, DIR *dir, char *path, struct stat *st)
@@ -198,7 +295,9 @@ void ldisplay(struct dirent **result, DIR *dir, char *path, struct stat *st)
 	int i = 0;
 	max_t *max = malloc(sizeof(max_t));
 
-	max->size = sizmax(result, path, st);
+	max->size = sizmax(result, path, st, dir);
+	max->link = linkmax(result, path, st, dir);
+	dir = opendir("./");
 	while (result[i]) {
 		if (result[i]->d_name[0] != '.') {
 			path = my_strconcat(path, "./", result[i]->d_name);
@@ -208,6 +307,8 @@ void ldisplay(struct dirent **result, DIR *dir, char *path, struct stat *st)
 		i = i + 1;
 		result[i] = readdir(dir);
 	}
+	closedir(dir);
+	free(max);
 }
 
 void simpledisplay(struct dirent **result, DIR *dir)
