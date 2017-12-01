@@ -48,7 +48,7 @@ int numberfile(int ac, char **av)
 	int x = 0;
 	struct dirent *number = malloc(sizeof(struct dirent));
 
-	if (ac == 1)
+	if (ac == 1 || (ac == 2 && av[1][0] == '-' && av[1][1] == 'l'))
 		dir = opendir("./");
 	else
 		dir = opendir(av[1]);
@@ -105,6 +105,8 @@ void permiother(struct stat *st, int i)
 		my_printf("-");
 	if (st[i].st_mode & S_IXOTH)
 		my_printf("x");
+	else if (st[i].st_mode & S_ISVTX)
+		my_printf("T");
 	else
 		my_printf("-");
 }
@@ -240,16 +242,21 @@ void maxima(struct dirent **result, char *path, struct stat *st, DIR *dir, max_t
 	free(f_max);
 }
 
+void fillmax(max_t *max)
+{
+	max->grp = 0;
+	max->usr = 0;
+	max->size = 0;
+	max->link = 0;
+}
+
 void ldisplaymult(struct dirent **result, DIR *dir, char *path, struct stat *st)
 {
 	int i = 0;
 	max_t *max = malloc(sizeof(max_t));
 	char *fname = malloc(sizeof(char) * my_strlen(path));
 
-	max->grp = 0;
-	max->usr = 0;
-	max->size = 0;
-	max->link = 0;
+	fillmax(max);
 	maxima(result, path, st, dir, max);
 	dir = opendir(path);
 	while (result[i]) {
@@ -270,12 +277,10 @@ void ldisplay(struct dirent **result, DIR *dir, char *path, struct stat *st)
 	int i = 0;
 	max_t *max = malloc(sizeof(max_t));
 
-	max->grp = 0;
-	max->usr = 0;
-	max->size = 0;
-	max->link = 0;
+	fillmax(max);
 	maxima(result, "./", st, dir, max);
 	dir = opendir("./");
+	result[i] = readdir(dir);
 	while (result[i]) {
 		if (result[i]->d_name[0] != '.') {
 			path = my_strconcat(path, "./", result[i]->d_name);
@@ -306,25 +311,36 @@ int main(int ac, char **av)
 {
 	DIR *dir;
 	int y = 0;
+	int p = 0;
 	int nbfile = numberfile(ac, av);
 	struct dirent **result = malloc(sizeof(struct dirent) * nbfile * 999);
 	struct stat *st = malloc(sizeof(struct stat) * nbfile * 999);
 	char *path = malloc(sizeof(char) * nbfile * 999);
 
-
-	if (ac == 1) {
-		dir = opendir("./");
-		result[y] = readdir(dir);
-		ldisplay(result, dir, path, st);
-		//simpledisplay(result, dir);
-		closedir(dir);
-	} else {
-		dir = opendir(av[1]);
-		result[y] = readdir(dir);
-		path = my_strconcat(path, av[1], "/");
-		ldisplaymult(result, dir, path, st);
-		//simpledisplay(result, dir);
-		closedir(dir);
+	while (p < ac) {
+		if (ac == 1) {
+			dir = opendir("./");
+			result[y] = readdir(dir);
+			//ldisplay(result, dir, path, st);
+			simpledisplay(result, dir);
+			closedir(dir);
+		} else if (ac >= 2){
+			if (ac == 2 && av[p][0] == '-' && av[p][1] == 'l') {
+				dir = opendir("./");
+				result[y] = readdir(dir);
+				ldisplay(result, dir, path, st);
+				//simpledisplay(result, dir);
+				closedir(dir);
+			} else {
+			/*dir = opendir(av[1]);
+			result[y] = readdir(dir);
+			path = my_strconcat(path, av[1], "/");
+			ldisplaymult(result, dir, path, st);
+			//simpledisplay(result, dir);
+			closedir(dir);*/
+			}
+		}
+		p = p + 1;
 	}
 	free(st);
 	free(path);
