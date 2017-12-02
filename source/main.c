@@ -311,40 +311,54 @@ void simpledisplay(struct dirent **result, DIR *dir)
 
 int main(int ac, char **av)
 {
+	if (ac > 3)
+		return (0);
 	DIR *dir;
 	int y = 0;
-	//int p = 0;
+	int p = 1;
 	int nbfile = numberfile(ac, av);
 	struct dirent **result = malloc(sizeof(struct dirent) * nbfile * 999);
 	struct stat *st = malloc(sizeof(struct stat) * nbfile * 999);
 	char *path = malloc(sizeof(char) * nbfile * 999);
 
-		if (ac == 1) {
+	if (ac == 1) {
+		dir = opendir("./");
+		result[y] = readdir(dir);
+		simpledisplay(result, dir);
+		closedir(dir);
+	} else if (ac >= 2){
+		if (ac == 2 && av[1][0] == '-' && av[1][1] == 'l') {
 			dir = opendir("./");
 			result[y] = readdir(dir);
+			ldisplay(result, dir, path, st);
+			closedir(dir);
+		} else if (ac == 2 && av[1][0] != '-' && av[1][1] != 'l') {
+			//if ()
+			dir = opendir(av[1]);
+			result[y] = readdir(dir);
+			path = my_strconcat(path, av[1], "/");
 			simpledisplay(result, dir);
 			closedir(dir);
-		} else if (ac >= 2){
-			if (ac == 2 && av[1][0] == '-' && av[1][1] == 'l') {
-				dir = opendir("./");
+		} else if (ac == 3 && av[1][0] == '-' && av[1][1] == 'l') {
+			dir = opendir(av[2]);
+			result[y] = readdir(dir);
+			path = my_strconcat(path, av[2], "/");
+			ldisplaymult(result, dir, path, st);
+			closedir(dir);
+		} else if (ac == 3 && av[1][0] != '-' && av[1][1] != 'l') {
+			while (p < ac) {
+				dir = opendir(av[p]);
 				result[y] = readdir(dir);
-				ldisplay(result, dir, path, st);
-				closedir(dir);
-			} else if (ac == 2 && av[1][0] != '-' && av[1][1] != 'l') {
-				dir = opendir(av[1]);
-				result[y] = readdir(dir);
-				path = my_strconcat(path, av[1], "/");
+				path = my_strconcat(path, av[p], "/");
+				my_printf("%s :\n", path);
 				simpledisplay(result, dir);
+				if (p != ac - 1)
+					my_printf("\n");
 				closedir(dir);
-			} else if (ac == 3 && av[1][0] == '-' && av[1][1] == 'l') {
-				dir = opendir(av[2]);
-				result[y] = readdir(dir);
-				path = my_strconcat(path, av[2], "/");
-				ldisplaymult(result, dir, path, st);
-				closedir(dir);
-			}// else if (ac > 2 && av[1][0] != '-' && av[1][1] != 'l') {
-
+				p = p + 1;
+			}
 		}
+	}
 	free(st);
 	free(path);
 	free(result);
