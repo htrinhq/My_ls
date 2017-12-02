@@ -212,7 +212,7 @@ void properties(struct stat *st, int i, struct dirent **result, max_t *max)
 
 void maxima(struct dirent **result, char *path, struct stat *st, DIR *dir, max_t *max)
 {
-	char *f_max = malloc(sizeof(char) * (my_strlen(path) * 2));
+	char *f_max = malloc(sizeof(char) * (my_strlen(path) * 999));
 	int i = 0;
 	long sm = 0;
 	unsigned int lm = 0;
@@ -256,7 +256,7 @@ void ldisplaymult(struct dirent **result, DIR *dir, char *path, struct stat *st)
 {
 	int i = 0;
 	max_t *max = malloc(sizeof(max_t));
-	char *fname = malloc(sizeof(char) * my_strlen(path));
+	char *fname = malloc(sizeof(char) * 999);
 
 	fillmax(max);
 	maxima(result, path, st, dir, max);
