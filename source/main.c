@@ -50,8 +50,10 @@ int numberfile(int ac, char **av)
 
 	if (ac == 1 || (ac == 2 && av[1][0] == '-' && av[1][1] == 'l'))
 		dir = opendir("./");
-	else
+	else if (ac == 2 && av[1][0] != '-' && av[1][1] != 'l')
 		dir = opendir(av[1]);
+	else if (ac == 3)
+		dir = opendir(av[2]);
 	while (number) {
 		number = readdir(dir);
 		x = x + 1;
@@ -103,10 +105,10 @@ void permiother(struct stat *st, int i)
 		my_printf("w");
 	else
 		my_printf("-");
-	if (st[i].st_mode & S_IXOTH)
-		my_printf("x");
-	else if (st[i].st_mode & S_ISVTX)
+	if (st[i].st_mode & S_ISVTX)
 		my_printf("T");
+	else if (st[i].st_mode & S_IXOTH)
+		my_printf("x");
 	else
 		my_printf("-");
 }
@@ -311,37 +313,38 @@ int main(int ac, char **av)
 {
 	DIR *dir;
 	int y = 0;
-	int p = 0;
+	//int p = 0;
 	int nbfile = numberfile(ac, av);
 	struct dirent **result = malloc(sizeof(struct dirent) * nbfile * 999);
 	struct stat *st = malloc(sizeof(struct stat) * nbfile * 999);
 	char *path = malloc(sizeof(char) * nbfile * 999);
 
-	while (p < ac) {
 		if (ac == 1) {
 			dir = opendir("./");
 			result[y] = readdir(dir);
-			//ldisplay(result, dir, path, st);
 			simpledisplay(result, dir);
 			closedir(dir);
 		} else if (ac >= 2){
-			if (ac == 2 && av[p][0] == '-' && av[p][1] == 'l') {
+			if (ac == 2 && av[1][0] == '-' && av[1][1] == 'l') {
 				dir = opendir("./");
 				result[y] = readdir(dir);
 				ldisplay(result, dir, path, st);
-				//simpledisplay(result, dir);
 				closedir(dir);
-			} else {
-			/*dir = opendir(av[1]);
-			result[y] = readdir(dir);
-			path = my_strconcat(path, av[1], "/");
-			ldisplaymult(result, dir, path, st);
-			//simpledisplay(result, dir);
-			closedir(dir);*/
-			}
+			} else if (ac == 2 && av[1][0] != '-' && av[1][1] != 'l') {
+				dir = opendir(av[1]);
+				result[y] = readdir(dir);
+				path = my_strconcat(path, av[1], "/");
+				simpledisplay(result, dir);
+				closedir(dir);
+			} else if (ac == 3 && av[1][0] == '-' && av[1][1] == 'l') {
+				dir = opendir(av[2]);
+				result[y] = readdir(dir);
+				path = my_strconcat(path, av[2], "/");
+				ldisplaymult(result, dir, path, st);
+				closedir(dir);
+			}// else if (ac > 2 && av[1][0] != '-' && av[1][1] != 'l') {
+
 		}
-		p = p + 1;
-	}
 	free(st);
 	free(path);
 	free(result);
