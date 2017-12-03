@@ -5,7 +5,13 @@
 ##
 ##
 
-SRC	=	source/main.c
+SRC	=	source/main.c	\
+		source/permission.c	\
+		source/display.c	\
+		source/general.c	\
+		source/my_strconcat.c	\
+		source/maxima.c	\
+		source/arguments.c
 
 OBJ	=	$(SRC:.c=.o)
 
