@@ -43,6 +43,7 @@ void ldisplaymul(struct dirent **result, DIR *dir, char *path, struct stat *st)
 	fillmax(max);
 	maxima(result, path, st, dir, max);
 	dir = opendir(path);
+	result[i] = readdir(dir);
 	while (result[i]) {
 		if (result[i]->d_name[0] != '.') {
 			fname = my_strconcat(fname, path, result[i]->d_name);
